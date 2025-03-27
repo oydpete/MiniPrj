@@ -10,7 +10,7 @@ ReadMe Highlight more information on the Project
 * Contains Vagrant file and the Shell.script for ssh confg and for target server to be managed
 
 
-[Section ii | Linux Server Administration]("C:\Users\P.I\Documents\Github2\March\MiniPrj\Scripts\Part 2 Scripts\Linux_Server_Administration_Script.sh")
+[Section ii | Linux Server Administration](./Scripts/Part%202%20Scripts/Linux_Server_Administration_Script.sh)
 
 * Two 
 
