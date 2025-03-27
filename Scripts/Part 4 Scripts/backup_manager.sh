@@ -1,108 +1,85 @@
 #!/bin/bash
 
+BACKUP_DIRS=("/mnt/c/Users/P.I/Documents/Github2/March/MiniPrj/Documentation")    # Directories to back up (Modify these paths as needed)
+Backupp="/backups"                                                                #  folder where backups will be stored
+limit=30                                                                          # Number of most recent backups to be kept
+LOG_FILE="/var/log/backup_manager.log"                                            # Log file to keep track of backup operations
 
+touch "$LOG_FILE"                                                                 # Create log file if not exists
 
-BACKUP_DIRS=("/home/user/documents" "/etc" "/var/www")          # Directories to back up (Modify these paths as needed)
-
-DESTINATION="/backups"                                          # Destination folder where backups will be stored
-
-limit=3                                                    # Number of most recent backups to be kept
-
-LOG_FILE="/var/log/backup_manager.log"                         # Log file to keep track of backup operations
-
-
-touch "$LOG_FILE"
-
-#FUNCTIONS
-
-# Function to log messages with timestamp
-log() {
-    local message="$1"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $message" | tee -a "$LOG_FILE"
-}
-
-
-if [ "$(id -u)" -ne 0 ]; then                                             # To check if it is in the root
-    echo "Please run this script as root " >&2
+# Ensure the script runs as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Please run this script as root" >&2
     exit 1
 fi
 
-
-
-if [ ! -d "$DESTINATION" ]; then                                      # Check if backup destination exists, if not, create it
-    log "Backup destination does not exist. Creating..... $DESTINATION"
-    mkdir -p "$DESTINATION"
+# Check if backup Backupp exists, if not, create it
+if [ ! -d "$Backupp" ]; then
+    echo "Backup Backupp does not exist. Creating..... $Backupp" | tee -a "$LOG_FILE"
+    mkdir -p "$Backupp"
 fi
 
 
+# FUNCTIONS
 
-# Function to create a backup
-create_backup() {
-    local timestamp=$(date "+%Y%m%d_%H%M%S")                            # Generate the backup timestamp
-    local backup_name="backup_$timestamp.tar.gz"                        # Define the backup file name
-    local backup_path="$DESTINATION/$backup_name"                       # The Backup Path
+# Function to add log messages with timestamp (i)
+log1() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
 
-    log "Starting backup: $backup_name"
+# Function to create a backup (ii)
+create_backup2() {
+    local FILE_NAME="backup_$(date '+%Y%m%d_%H%M%S').tar.gz"                    # Generate the backup filename
+    local backup_path="$Backupp/$FILE_NAME"                                     # Backup file full path
 
-    # Create a compressed archive (tar.gz) of the directories listed in BACKUP_DIRS
+    
+    log1 "Starting backup: $FILE_NAME"
     if tar -czf "$backup_path" "${BACKUP_DIRS[@]}" 2>>"$LOG_FILE"; then
-        log "Backup created successfully: $backup_path"
-        verify_backup "$backup_path"  # Verify the integrity of the created backup
+        log1 "Backup created successfully: $backup_path"
+        verify_backup "$backup_path"                                            # call the Verify_Backup function with arguement
     else
-        log "Error: Backup creation failed"
-        rm -f "$backup_path"  # Remove the failed backup file
+        log1 "Error: Backup creation failed"
+        rm -f "$backup_path"
         exit 1
     fi
 }
 
-# Function to verify backup integrity
+# Function to verify backup integrity if it was created properly
 verify_backup() {
-    local backup_file="$1"
-    log "Verifying backup: $backup_file"
-
-    
-    if tar -tzf "$backup_file" &>/dev/null; then                        # Check if the backup file is a valid tar archive
-        log "Backup verified successfully: $backup_file"
+    log1 "Verifying backup: $1"      
+    if tar -tzf "$1" &>/dev/null; then            # check file
+        log1 "Backup verified successfully: $1"
     else
-        log "Error: Backup verification failed - $backup_file may be corrupt"
+        log1 "Error: Backup verification failed - $1 may be corrupt"
         exit 1
     fi
 }
 
+# Function to delete old backups exceeding the limit
+rotate_backups3() {
+    log1 "| Starting backup rotation (keeping last $limit backups)"
+    local backups=($(ls -t "$Backupp"/backup_*.tar.gz 2>/dev/null))
 
-# Function to delete log after reaching limit
-rotate_backups() {
-    log " | Starting backup rotation (keeping last $limit backups)"
-
-    # Get a sorted list of existing backups (most recent first)
-    local backups=($(ls -t "$DESTINATION"/backup_*.tar.gz 2>/dev/null))
-    
-    
-
-    if [ "${#backups[@]}" -le "$limit" ]; then            # Check if the number of backups exceeds the retention limit
-        log " | No old backups to remove"
+    if [ "${#backups[@]}" -le "$limit" ]; then                                            # check if the backup files are enough
+        log1 "| No old backups to remove"
         return
     fi
- 
-
-
-    # Delete the oldest backups beyond the retention count
-    for ((i=$limit; i<${#backups[@]}; i++)); do
-        log " | Removing old backup: ${backups[i]}"
+    for ((i=limit; i<${#backups[@]}; i++)); do                                           # check if the file greater than the limit
+        log1 "| Removing old backup: ${backups[i]}"
         rm -f "${backups[i]}"
     done
-
-    log " | Backup rotation completed"
+    log1 "| Backup rotation completed"
 }
 
-# Main execution process
-log " --- Backup process started .........."
-create_backup  # Create a new backup
-rotate_backups  # Rotate backups if needed
-log " | Backup process completed! "
+# Main execution process 
+
+log1 "--- Backup process started .........."                                                 # call functions
+create_backup2  # Create a new backup
+rotate_backups3  # Rotate backups if needed
+log1 "| Backup process completed!"
 
 # List existing backups for reference
-log " | Current backups in $DESTINATION:"
-ls -lh "$DESTINATION"/backup_*.tar.gz 2>/dev/null | tee -a "$LOG_FILE"
+log1 "| Current backups in $Backupp:"
+ls -lh "$Backupp"/backup_*.tar.gz 2>/dev/null | tee -a "$LOG_FILE"
 
 exit 0

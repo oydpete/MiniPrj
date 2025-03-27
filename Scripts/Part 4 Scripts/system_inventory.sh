@@ -3,81 +3,68 @@
 # Define the output file for storing system information
 OUT="system_report.txt"
 
-
+# Function to print a divider
 Divider() {
-
-    echo " +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ " > "$OUT"
-
+    echo " +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ " >> "$OUT"
 }
 
+# Correct function calls
+Divider 
 
-Divider | tee -a "$OUT"
-
-# Function For Collecting Hardware Information
-
-
-#
+# Function to collect hardware information
 collect_hardware_info() {
-
-    echo "            HARDWARE INFORMATION/n            " > "$OUT"  # Heading 1
-    echo "CPU Info:" >> "$OUT"                              # Label for CPU information
-    lscpu >> "$OUT"  # Get CPU details and append to output file
-    echo "" >> "$OUT"  # Add a blank line for readability
+    # Output cpu info
+    echo -e "            HARDWARE INFORMATION\n" >> "$OUT"  # Heading 1
+    echo "CPU Info:" >> "$OUT"
+    lscpu >> "$OUT"
+    echo "" >> "$OUT"
+    
+    
+    # output the memory space
+    echo "Memory Info:" >> "$OUT"
+    free -h >> "$OUT"
+    echo "" >> "$OUT"
     
 
-    echo "Memory Info:" >> "$OUT"  # Label for memory information
-    free -h >> "$OUT"  # Get memory usage in human-readable format and append to output file
-    echo "" >> "$OUT"  # Add a blank line for readability
-    
-    echo "The Disk Usage :/n " >> "$OUT"  # Label for disk usage
-    df -h >> "$OUT"  # Get disk space usage in human-readable format and append to output file
-    echo "/n" >> "$OUT"  # empty line
+    # Ouput the Disk usage
+    echo -e "The Disk Usage:\n" >> "$OUT"
+    df -h >> "$OUT"
+    echo "" >> "$OUT"
 }
 
-Divider | tee -a "$OUT"
+Divider 
 
-
-echo "Hostname: $(hostname)" | tee -a "$REPORT_FILE"
+# Capture Hostname
+echo "Hostname: $(hostname)" | tee -a "$OUT"
 
 # Function to list installed packages
 list_installed_packages() {
-
-    echo "            INSTALLED PACKAGES            " >> "$OUT"  # Heading 2
-    if command -v dpkg &> /dev/null; then  # Check if dpkg (Debian-based package manager) is available
-        dpkg --list >> "$OUT"  # List installed packages using dpkg and append to output file
+    echo "            INSTALLED PACKAGES            " >> "$OUT"
+    if command -v dpkg &> /dev/null; then
+        dpkg --list >> "$OUT"
     else
-        echo "Package manager not found!" >> "$OUT"  # Print an error if no package manager is found
+        echo "Package manager not found!" >> "$OUT"
     fi
-
-    echo "" >> "$OUT"  # empty line
+    echo "" >> "$OUT"
 }
 
-
-
-Divider | tee -a "$OUT"
-
-
+Divider 
 
 # Function to identify running services
 identify_running_services() {
-    echo "            RUNNING SERVICES           " >> "$OUT"  # Add section header to output file
-
-    systemctl list-units --type=service --state=running >> "$OUT"  # List running services and append to output file
-
-    echo "" >> "$OUT"  # Add a blank line for readability
+    echo "            RUNNING SERVICES           " >> "$OUT"
+    systemctl list-units --type=service --state=running >> "$OUT"
+    echo "" >> "$OUT"
 }
 
-
-Divider | tee -a "$OUT"
-
+Divider 
 
 # Main execution: Call functions to gather system information
-collect_hardware_info  # Collect CPU, memory, and disk usage info
-list_installed_packages  # Collect list of installed packages
-identify_running_services  # Collect list of running services
+collect_hardware_info
+list_installed_packages
+identify_running_services
 
+Divider 
 
-Divider | tee -a "$OUT"
+echo "System report generated to $OUT"
 
-
-echo "System report generated in $OUT"  # Print message to indicate completion

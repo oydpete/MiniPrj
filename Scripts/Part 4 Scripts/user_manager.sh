@@ -1,18 +1,14 @@
 #!/bin/bash
 
-# To Check if you are Root, if not exit
-if [[ $EUID -ne 0 ]]; then
-   echo "Please run as root" 
-   exit 1
-fi
 
-# Function to center text in the terminal
+## Center Text Function (Formats Output Nicely)
 center_text() {
     text="$1"
-    width=80  # Adjust width as needed
-    padding=$(( (width - ${#text}) / 2 ))  # Calculate left padding
-    printf "%*s%s\n" $padding "" "$text"
+    width=80 
+    padding=$(( (width - ${#text}) / 2 )) 
+    printf "%*s%s%*s\n" $((padding)) "" "$text" $((padding))
 }
+
 
 # Function to create a new user
 create_user() {
@@ -21,20 +17,58 @@ create_user() {
         echo "The User $username already exists"
         return 1
     fi
-    read -s -p "Enter password for $username: " password
-    echo ""
-    useradd -m "$username"  # Create a new user with a home directory
-    echo "$username:$password" | chpasswd
+
+    useradd -m "$username"  # Create user with home directory
+
+    # Check if `pwscore` is installed before using it, and install if missing
+    if ! command -v pwscore &>/dev/null; then
+        echo "pwscore is not installed. Installing now..."
+        apt update && apt install -y libpwquality-tools
+    fi
+
+    while true; do
+        read -s -p "Enter password for $username: " password
+        echo ""
+        read -s -p "Confirm password: " password_confirm
+        echo ""
+
+        # Check if passwords match
+        if [[ "$password" != "$password_confirm" ]]; then
+            echo "Error: Passwords do not match. Please try again."
+            continue
+        fi
+
+        # Check password strength using `pwscore`
+        score=$(echo "$password" | pwscore)
+        if [[ "$score" -lt 50 ]]; then
+            echo "Error: Password is too weak. Please try again."
+            continue
+        fi
+
+        # Attempt to set the password
+        echo "$username:$password" | chpasswd 2>/tmp/password_error.log
+        if [[ $? -ne 0 ]]; then
+            error_message=$(cat /tmp/password_error.log)
+            echo "Error: Failed to set password because it doesn't meet policy requirements."
+            echo "Details: $error_message"
+            rm -f /tmp/password_error.log
+            continue
+        fi
+
+        break  # Exit loop if password is successfully set
+    done
+
     echo "The user $username was created successfully."
 
     # Option to set up SSH key for secure remote access
     read -p "Do you want to set up SSH access for $username? (y/n): " ssh_choice
     if [[ "$ssh_choice" == "y" ]]; then
-        mkdir -p /home/$username/.ssh  # Create SSH directory
-        touch /home/$username/.ssh/authorized_keys  # Create authorized keys file
-        chmod 700 /home/$username/.ssh  # Give user full access to SSH directory
-        chmod 600 /home/$username/.ssh/authorized_keys  # Give user full access to key file
-        chown -R $username:$username /home/$username/.ssh  # Make the user the owner of the file
+        user_home=$(eval echo ~$username)  # Get home directory dynamically
+        mkdir -p "$user_home/.ssh"  # Create SSH directory
+        touch "$user_home/.ssh/authorized_keys"  # Create authorized keys file
+        chmod 700 "$user_home/.ssh"  # Secure directory permissions
+        chmod 600 "$user_home/.ssh/authorized_keys"  # Secure file permissions
+        chown -R "$username:$username" "$user_home/.ssh"  # Ensure proper ownership
         echo "SSH setup for $username completed."
     fi
 }
@@ -119,11 +153,11 @@ set_password_policy() {
 
     # Check if password complexity is already enforced
     if grep -q "pam_pwquality.so" /etc/pam.d/common-password; then
-        echo "Password complexity already enforced."
+        echo "Password Policy already enforced."
     else
         # Add password complexity rule to PAM
         echo "password requisite pam_pwquality.so retry=3 minlen=10 dcredit=-1 ucredit=-1 lcredit=-1 ocredit=-1" >> /etc/pam.d/common-password
-        echo "Password complexity enforced."
+        echo "Password Policy enforced."
     fi
 }
 
@@ -140,6 +174,9 @@ while true; do
     echo "5. Enforce password policies"
     echo "6. Exit"
     read -p "Select Action (1-6): " choice  # Get user input
+
+
+# For Choices
 
     case $choice in
         1) create_user ;;  # Call function to create a user

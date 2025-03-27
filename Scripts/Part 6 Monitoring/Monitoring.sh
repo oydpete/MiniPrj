@@ -7,16 +7,23 @@
 center_text() {
     text="$1"
     width=80 
-    padding=$(( (width - ${#text}) / 2 )) 
+    padding=$(( (width - ${#text}) / 2 ))
+    [ $(( (width - ${#text}) % 2 )) -ne 0 ] && padding=$((padding + 1))
     printf "%*s%s%*s\n" $((padding)) "" "$text" $((padding))
 }
 
-# Define Report Folder and File
-REPORT_FOLDER="$HOME/system_reports"
-mkdir -p "$REPORT_FOLDER"
+# Detect WSL (for Windows paths)
+if grep -qi microsoft /proc/version; then
+    REPORT_FOLDER="/mnt/c/Users/P.I/Documents/Github2/March/MiniPrj/Scripts/Part 6 Monitoring"
+else
+    REPORT_FOLDER="/var/reports"  # Default Linux path
+fi
+mkdir -p "$REPORT_FOLDER"  
 
 DAY=$(date +%Y-%m-%d)  # Format: YYYY-MM-DD
-REPORT_FILE="$REPORT_FOLDER/$DAY_System_Report.txt"
+REPORT_FILE="$REPORT_FOLDER/${DAY}_System_Report.txt"
+
+echo "Report will be saved to: $REPORT_FILE"
 
 # Ensure script runs as root for full logs and updates
 if [ "$(id -u)" -ne 0 ]; then
@@ -60,6 +67,11 @@ fi
     center_text "🔹 FAILED LOGIN ATTEMPTS (LAST 10)"
     echo "============================================"
     LOG_FILE="/var/log/auth.log"
+    
+    # Check for alternative log location
+    if [ ! -f "$LOG_FILE" ] && [ -f "/var/log/secure" ]; then
+        LOG_FILE="/var/log/secure"
+    fi
 
     if [ -f "$LOG_FILE" ]; then
         grep "Failed password" "$LOG_FILE" | tail -n 10
@@ -72,14 +84,14 @@ fi
     center_text "🔹 AVAILABLE SYSTEM UPDATES"
     echo "============================================"
     if command -v apt-get &> /dev/null; then
-        apt list --upgradable 2>/dev/null || echo " No updates available"
+        apt list --upgradable 2>/dev/null | grep -v "Listing..." || echo " No updates available"
     else
         echo " Could not check updates (unknown package manager)"
     fi
     echo ""
 
-} > "$REPORT_FILE"  # Save output to file
+} > "$REPORT_FILE"  # ✅ Save output to file
 
 # Display the report path
 echo " Report saved to: $REPORT_FILE"
-echo " To view the report, type: cat \"$REPORT_FILE\""
+echo "To view the report, type: cat \"$REPORT_FILE\""
