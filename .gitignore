@@ -1,6 +1,7 @@
 # Ignore system files
 .DS_Store
 Thumbs.db
+.env
 
 # Ignore logs and temporary files
 *.log
