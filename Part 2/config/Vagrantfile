@@ -1,0 +1,36 @@
+Vagrant.configure("2") do |config|
+  #Define a common box for all VMs
+  config.vm.box = "ubuntu/bionic64"
+
+  #Defining Admin Server
+  config.vm.define "Admin" do |adm|
+      adm.vm.hostname = "Admin"
+      adm.vm.network "private_network", ip: "192.168.56.10"
+      adm.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+      vb.cpus = "2"
+      end
+  end
+
+  #Defining Target Server
+  config.vm.define "Target" do |target|
+      target.vm.hostname = "target"
+      target.vm.network "private_network", ip: "192.168.56.12"
+      target.vm.provider "virtualbox" do |vb|
+      vb.memory = "512"
+      vb.cpus = "1"
+      end
+  end
+
+  #Defining Load Balancer
+  config.vm.define "Spare" do |spare|
+      spare.vm.hostname = "spare"
+      spare.vm.network "private_network", ip: "192.168.56.14"
+      spare.vm.provider "virtualbox" do |vb|
+      vb.memory = "512"
+      vb.cpus = "1"
+      end
+      
+  end
+
+end
