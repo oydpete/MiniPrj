@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# Simple Daily System Report Script
-# This script checks system health and saves the report
+
 
 ## Center Text Function (Formats Output Nicely)
 center_text() {
@@ -13,11 +12,21 @@ center_text() {
 }
 
 # Detect WSL (for Windows paths)
-if grep -qi microsoft /proc/version; then
-    REPORT_FOLDER="/mnt/c/Users/P.I/Documents/Github2/March/MiniPrj/Scripts/Part 6 Monitoring"
+
+source .env
+
+
+
+
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
 else
-    REPORT_FOLDER="/var/reports"  # Default Linux path
+    echo " .env file not found!"
+    exit 1
 fi
+
+
+
 mkdir -p "$REPORT_FOLDER"  
 
 DAY=$(date +%Y-%m-%d)  # Format: YYYY-MM-DD

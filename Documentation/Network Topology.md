@@ -1,29 +1,19 @@
 # Network Documentation
 
-## 📌 Network Topology Diagram
-*(Include a visual representation of your network. You can use tools like Draw.io, Lucidchart, or ASCII art if preferred.)*
-
-```
-[ VM1 ] ----- [ Switch/Router ] ----- [ VM2 ]
-                     |
-                     |
-                  [ VM3 ]
-```
 
 ## 🏷 IP Addressing Scheme
 | Device | Interface | IP Address | Subnet Mask |
 |--------|----------|------------|-------------|
-| VM1    | eth0     | 192.168.1.10 | 255.255.255.0 |
-| VM2    | eth0     | 192.168.1.11 | 255.255.255.0 |
-| VM3    | eth0     | 192.168.1.12 | 255.255.255.0 |
-| Router | eth0     | 192.168.1.1  | 255.255.255.0 |
+| Admin    | eth0     | 192.168.1.13 | 255.255.255.0 |
+| target    | eth0     | 192.168.1.14 | 255.255.255.0 |
+| Spare    | eth0     | 192.168.1.15 | 255.255.255.0 |
 
 ## 🔥 Firewall Rules
 | Rule ID | Source IP | Destination IP | Port | Protocol | Action | Description |
 |---------|-----------|----------------|------|----------|--------|-------------|
-| 1       | Any       | 192.168.1.10    | 22   | TCP      | Allow  | SSH access to VM1 |
-| 2       | Any       | 192.168.1.11    | 22   | TCP      | Allow  | SSH access to VM2 |
-| 3       | Any       | 192.168.1.12    | 22   | TCP      | Allow  | SSH access to VM3 |
+| 1       | Any       | 192.168.1.13    | 22   | TCP      | Allow  | SSH access to Admin |
+| 2       | Any       | 192.168.1.11    | 22   | TCP      | Allow  | SSH access to target |
+| 3       | Any       | 192.168.1.15    | 22   | TCP      | Allow  | SSH access to Spare |
 | 4       | Any       | 192.168.1.0/24  | Any  | Any      | Allow  | Internal network communication |
 | 5       | Any       | Any             | Any  | Any      | Deny   | Block all other traffic |
 
@@ -36,13 +26,5 @@
 | RabbitMQ | 5672  | TCP      |
 | Celery   | 5555  | TCP      |
 
----
-### Notes:
-- Ensure that firewall rules are properly configured to prevent unauthorized access.
-- SSH key-based authentication is recommended for enhanced security.
-- The IP addressing scheme should be updated based on your actual network configuration.
-- The topology diagram can be enhanced using a drawing tool for better clarity.
 
----
-✅ *Last Updated: $(date)*
 

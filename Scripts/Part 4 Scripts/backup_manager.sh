@@ -1,11 +1,19 @@
 #!/bin/bash
 
-BACKUP_DIRS=("/mnt/c/Users/P.I/Documents/Github2/March/MiniPrj/Documentation")    # Directories to back up (Modify these paths as needed)
-Backupp="/backups"                                                                #  folder where backups will be stored
+                                                                #  folder where backups will be stored
 limit=30                                                                          # Number of most recent backups to be kept
-LOG_FILE="/var/log/backup_manager.log"                                            # Log file to keep track of backup operations
+                                           # Log file to keep track of backup operations
 
-touch "$LOG_FILE"                                                                 # Create log file if not exists
+source .env
+
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+else
+    echo " .env file not found!"
+    exit 1
+fi
+
+touch "$LOG_FILE2"                                                                 # Create log file if not exists
 
 # Ensure the script runs as root
 if [ "$(id -u)" -ne 0 ]; then
@@ -15,7 +23,7 @@ fi
 
 # Check if backup Backupp exists, if not, create it
 if [ ! -d "$Backupp" ]; then
-    echo "Backup Backupp does not exist. Creating..... $Backupp" | tee -a "$LOG_FILE"
+    echo "Backup Backupp does not exist. Creating..... $Backupp" | tee -a "$LOG_FILE2"
     mkdir -p "$Backupp"
 fi
 
@@ -24,7 +32,7 @@ fi
 
 # Function to add log messages with timestamp (i)
 log1() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE2"
 }
 
 # Function to create a backup (ii)
@@ -34,7 +42,7 @@ create_backup2() {
 
     
     log1 "Starting backup: $FILE_NAME"
-    if tar -czf "$backup_path" "${BACKUP_DIRS[@]}" 2>>"$LOG_FILE"; then
+    if tar -czf "$backup_path" "${BACKUP_DIRS[@]}" 2>>"$LOG_FILE2"; then
         log1 "Backup created successfully: $backup_path"
         verify_backup "$backup_path"                                            # call the Verify_Backup function with arguement
     else
@@ -73,13 +81,13 @@ rotate_backups3() {
 
 # Main execution process 
 
-log1 "--- Backup process started .........."                                                 # call functions
-create_backup2  # Create a new backup
-rotate_backups3  # Rotate backups if needed
+log1 "--- Backup process started .........."                                                     # call functions
+create_backup2                                                                                  # Create a new backup
+rotate_backups3                                                                                   # Rotate backups if needed
 log1 "| Backup process completed!"
 
 # List existing backups for reference
 log1 "| Current backups in $Backupp:"
-ls -lh "$Backupp"/backup_*.tar.gz 2>/dev/null | tee -a "$LOG_FILE"
+ls -lh "$Backupp"/backup_*.tar.gz 2>/dev/null | tee -a "$LOG_FILE2"
 
 exit 0

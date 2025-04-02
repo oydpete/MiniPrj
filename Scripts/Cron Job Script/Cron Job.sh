@@ -1,34 +1,29 @@
 #!/bin/bash
 
 # Load environment variables from .env file
-ENV_FILE="/vagrant/.env"
 
-SysInv="/vagrant/Scripts/Part4/system_inventory.sh"
-Monitor="/vagrant/Scripts/Part6/Monitoring.sh"
-Backupp="/vagrant/Scripts/Part4/backup_manager.sh"
-Upt="/vagrant/Scripts/CronJob/Checking_updates.sh"
+source .env
 
-if [ -f "$ENV_FILE" ]; then
-    set -a  # Export variables
-    source "$ENV_FILE"
-    set +a  # Stop exporting
+
+
+
+
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
 else
-    echo ".env file not found! Exiting."
+    echo " .env file not found!"
     exit 1
 fi
 
-# Define log file paths
-LOG_FILE="/var/log/system_maintenance.log"
-EMAIL_LOG_FILE="/var/log/Sent_notifications.log"
 
 # Create log files if they do not exist
-touch "$LOG_FILE" "$EMAIL_LOG_FILE"
+touch "$logs" "$EMAIL_LOG_FILE"
 
 # Function to log messages with timestamp
 log_message() {
     local LEVEL="$1"
     local MESSAGE="$2"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') || $LEVEL: $MESSAGE" | tee -a "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') || $LEVEL: $MESSAGE" | tee -a "$logs"
 }
 
 # Function to send critical alerts via email
@@ -60,10 +55,10 @@ log_message "INFO" "Setting up cron jobs..."
 CRONN=$(mktemp)
 crontab -l 2>/dev/null || true > "$CRONN"
 
-echo "0 0 * * 0 /usr/bin/env bash $SysInv >> $LOG_FILE 2>&1" >> "$CRONN"
-echo "0 * * * * /usr/bin/env bash $Monitor >> $LOG_FILE 2>&1" >> "$CRONN"
-echo "5 1 * * * /usr/bin/env bash $Backupp >> $LOG_FILE 2>&1" >> "$CRONN"
-echo "0 2 * * * /usr/bin/env bash $Upt >> $LOG_FILE 2>&1" >> "$CRONN"
+echo "0 0 * * 0 /usr/bin/env bash $SysInv >> $logs 2>&1" >> "$CRONN"                   # Perform System Inventory weekly 
+echo "0 * * * * /usr/bin/env bash $Monitor >> $logs 2>&1" >> "$CRONN"                   # Perform System Monitoring Hourly
+echo "5 1 * * * /usr/bin/env bash $Backupp >> $logs 2>&1" >> "$CRONN"                   # Perfom System Backup Daily
+echo "0 2 * * * /usr/bin/env bash $Upt >> $logs 2>&1" >> "$CRONN"                      # CheckUPDATE DAILY         
 
 crontab "$CRONN"
 rm "$CRONN"

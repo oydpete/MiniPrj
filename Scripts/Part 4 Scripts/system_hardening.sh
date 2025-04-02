@@ -5,7 +5,17 @@ if [ "$(id -u)" -ne 0 ]; then
     echo "This script must be run as root." >&2
     exit 1
 fi
-Security_Report="/var/log/security_report.log"
+
+source .env
+
+
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+else
+    echo " .env file not found!"
+    exit 1
+fi
+
 
 
 logt() {
@@ -63,7 +73,6 @@ ufw allow OpenSSH  # Allow SSH access
 ufw allow 80/tcp
 ufw allow 8080/tcp
 ufw enable
-Rules="/var/log/firewall_policy.log"  # Create special log
 echo "Saving firewall rules to log file..."
 echo "Firewall rules as of $(date):" > "$Rules"
 ufw status numbered >> "$Rules"

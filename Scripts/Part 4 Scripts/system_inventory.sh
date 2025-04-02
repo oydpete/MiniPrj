@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Define the output file for storing system information
-OUT="system_report.txt"
+
+ 
+
+
+OUT="$Report_Folder/system_report.txt"
+
 
 # Function to print a divider
 Divider() {

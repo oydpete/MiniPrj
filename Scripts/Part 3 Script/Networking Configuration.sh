@@ -2,9 +2,17 @@
 
 VM=$(hostname)
 VM_IP=$(hostname -I | grep -oP '192\.168\.\d+\.\d+')
-VM2_IP="192.168.56.14"
-VM1_IP="192.168.56.13"
-SSH_USER="Admin"
+
+
+
+soure .env
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+else
+    echo " .env file not found!"
+    exit 1
+fi
+
 
 # Ensure script is run as root
 if [ "$(id -u)" -ne 0 ]; then
@@ -71,9 +79,9 @@ ufw allow OpenSSH
 
 # Only run this line in Admin Server
 if [ "$VM" = "Admin" ]; then
-    ufw allow from $VM2_IP to any port 22
+    ufw allow from $target_ip to any port 22
 elif [ "$VM" = "Target" ]; then
-    ufw allow from $VM1_IP to any port 22
+    ufw allow from $admin_ip to any port 22
 fi
 
 echo "y" | sudo systemctl restart ssh
@@ -94,9 +102,9 @@ echo "Firewall rules saved to /var/log/firewall.log"
 # Part 4: Set up a private network between your servers
 echo "Configuring private network..."
 if [ "$VM" = "Admin" ]; then
-    ip route add 192.168.2.0/24 via $VM2_IP
+    ip route add 192.168.2.0/24 via $target_ip
 elif [ "$VM" = "Target" ]; then
-    ip route add 192.168.2.0/24 via $VM1_IP
+    ip route add 192.168.2.0/24 via $admin_ip
 fi
 echo "Private Network Between Admin and Target VM created Successfully"
 
