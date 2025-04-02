@@ -63,9 +63,9 @@ Content
 
 ## Part 6: Documentation & Reporting
 
-    * Content: 
-    * [Monitoring.sh](./Scripts/Part%206%20Monitoring/Monitoring.sh)
-    * [Monitoring text](./Documentation/Reports/system_report.txt)
+ * Content: 
+ * [Monitoring.sh](./Scripts/Part%206%20Monitoring/Monitoring.sh)
+ * [Monitoring text](./Documentation/Reports/system_report.txt)
 
 
 
